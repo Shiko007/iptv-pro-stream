@@ -6,7 +6,7 @@ enum VODContentType {
 
 struct VODBrowserView: View {
     let contentType: VODContentType
-    @State private var viewModel = VODViewModel()
+    @Bindable var viewModel: VODViewModel
 
     var body: some View {
         NavigationStack {

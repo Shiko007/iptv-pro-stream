@@ -2,27 +2,32 @@ import SwiftUI
 
 struct AppTabView: View {
     @State private var selectedTab: AppTab = .home
+    @State private var homeViewModel = HomeViewModel()
+    @State private var liveTVViewModel = LiveTVViewModel()
+    @State private var moviesViewModel = VODViewModel()
+    @State private var seriesViewModel = VODViewModel()
+    @State private var searchViewModel = SearchViewModel()
     private var syncManager = SyncManager.shared
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeView()
+            HomeView(viewModel: homeViewModel)
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(AppTab.home)
 
-            LiveTVView()
+            LiveTVView(viewModel: liveTVViewModel)
                 .tabItem { Label("Live TV", systemImage: "tv.fill") }
                 .tag(AppTab.liveTV)
 
-            VODBrowserView(contentType: .movie)
+            VODBrowserView(contentType: .movie, viewModel: moviesViewModel)
                 .tabItem { Label("Movies", systemImage: "film.fill") }
                 .tag(AppTab.movies)
 
-            VODBrowserView(contentType: .series)
+            VODBrowserView(contentType: .series, viewModel: seriesViewModel)
                 .tabItem { Label("Series", systemImage: "play.rectangle.on.rectangle.fill") }
                 .tag(AppTab.series)
 
-            SearchView()
+            SearchView(viewModel: searchViewModel)
                 .tabItem { Label("Search", systemImage: "magnifyingglass") }
                 .tag(AppTab.search)
 

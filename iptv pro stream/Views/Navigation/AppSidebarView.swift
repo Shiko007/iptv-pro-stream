@@ -3,6 +3,11 @@ import SwiftUI
 struct AppSidebarView: View {
     @State private var selectedTab: AppTab? = .home
     @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
+    @State private var homeViewModel = HomeViewModel()
+    @State private var liveTVViewModel = LiveTVViewModel()
+    @State private var moviesViewModel = VODViewModel()
+    @State private var seriesViewModel = VODViewModel()
+    @State private var searchViewModel = SearchViewModel()
     private var syncManager = SyncManager.shared
     #if os(macOS)
     private var fullScreenController = FullScreenPlayerController.shared
@@ -42,19 +47,19 @@ struct AppSidebarView: View {
         } detail: {
             switch selectedTab {
             case .home:
-                HomeView()
+                HomeView(viewModel: homeViewModel)
             case .liveTV:
-                LiveTVView()
+                LiveTVView(viewModel: liveTVViewModel)
             case .movies:
-                VODBrowserView(contentType: .movie)
+                VODBrowserView(contentType: .movie, viewModel: moviesViewModel)
             case .series:
-                VODBrowserView(contentType: .series)
+                VODBrowserView(contentType: .series, viewModel: seriesViewModel)
             case .search:
-                SearchView()
+                SearchView(viewModel: searchViewModel)
             case .settings:
                 SettingsView()
             case .none:
-                HomeView()
+                HomeView(viewModel: homeViewModel)
             }
         }
         #if os(macOS)

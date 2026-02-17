@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LiveTVView: View {
-    @State private var viewModel = LiveTVViewModel()
+    @Bindable var viewModel: LiveTVViewModel
 
     var body: some View {
         NavigationStack {
