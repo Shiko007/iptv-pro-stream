@@ -18,6 +18,7 @@ final class PlayerViewModel {
     private var timeObserver: Any?
     private var statusObservation: NSKeyValueObservation?
     private var rateObservation: NSKeyValueObservation?
+    private var endObserver: NSObjectProtocol?
     private let dataManager = DataManager.shared
     private var currentChannel: Channel?
     private var pendingResumePosition: Double?
@@ -48,7 +49,7 @@ final class PlayerViewModel {
             let service = VLCPlayerService()
             vlcService = service
             playerState.playbackState = .loading
-            service.load(url: url, headers: headers)
+            service.load(url: url, headers: headers, muted: isResuming)
             isPlaying = true
         } else {
             print("[RESUME-DEBUG] Using AVPlayer engine")
@@ -58,6 +59,10 @@ final class PlayerViewModel {
             isPlaying = true
         }
 
+        // For series, remove previous episodes of the same series so only the latest shows
+        if channel.streamType == .series, let seriesID = channel.streamID {
+            try? dataManager.removeRecentlyWatchedBySeries(seriesID: seriesID, except: channel.id)
+        }
         try? dataManager.updateRecentlyWatched(channel)
     }
 
@@ -142,7 +147,13 @@ final class PlayerViewModel {
 
     func stop() {
         if let channel = currentChannel, duration > 0 {
-            try? dataManager.updateRecentlyWatched(channel, position: currentTime, duration: duration)
+            let remaining = duration - currentTime
+            if remaining <= Constants.Player.nextEpisodeThreshold {
+                // Near the end — remove from continue watching
+                try? dataManager.removeRecentlyWatched(channel.id)
+            } else {
+                try? dataManager.updateRecentlyWatched(channel, position: currentTime, duration: duration)
+            }
         }
 
         if playerState.currentEngine == .vlc {
@@ -162,9 +173,9 @@ final class PlayerViewModel {
 
         if let position = pendingResumePosition, vlc.duration > 0 {
             pendingResumePosition = nil
-            isResuming = false
-            player.isMuted = false
             vlc.seek(to: position)
+            vlc.unmute()
+            isResuming = false
         }
 
         let actuallyPlaying = vlc.isActuallyPlaying
@@ -175,6 +186,8 @@ final class PlayerViewModel {
 
         if let vlcError = vlc.error {
             playerState.playbackState = .error(vlcError)
+        } else if vlc.isEnded {
+            playerState.playbackState = .ended
         } else if vlc.isBuffering {
             playerState.playbackState = .buffering
         } else if actuallyPlaying {
@@ -235,6 +248,18 @@ final class PlayerViewModel {
             }
         }
 
+        endObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else { return }
+                self.isPlaying = false
+                self.playerState.playbackState = .ended
+            }
+        }
+
         rateObservation = player.observe(\.rate, options: [.new]) { [weak self] player, _ in
             Task { @MainActor in
                 guard let self, !self.isResuming else { return }
@@ -257,6 +282,10 @@ final class PlayerViewModel {
         statusObservation = nil
         rateObservation?.invalidate()
         rateObservation = nil
+        if let endObserver {
+            NotificationCenter.default.removeObserver(endObserver)
+        }
+        endObserver = nil
     }
 
     deinit {

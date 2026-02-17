@@ -7,6 +7,7 @@ struct PlayerControlsOverlay: View {
     let onDismiss: () -> Void
     var onToggleFullScreen: (() -> Void)? = nil
     var isFullScreen: Bool = false
+    var onNextEpisode: (() -> Void)? = nil
     @State private var showControls = true
     @State private var hideTask: Task<Void, Never>?
     @State private var isScrubbing = false
@@ -33,6 +34,12 @@ struct PlayerControlsOverlay: View {
         streamType == .live
     }
 
+    private var showNextEpisode: Bool {
+        guard onNextEpisode != nil else { return false }
+        guard viewModel.duration > 0 else { return false }
+        return viewModel.duration - viewModel.currentTime <= Constants.Player.nextEpisodeThreshold
+    }
+
     var body: some View {
         ZStack {
             Color.clear
@@ -43,6 +50,28 @@ struct PlayerControlsOverlay: View {
                     }
                     if showControls { scheduleHide() }
                 }
+
+            // Next Episode button - always visible when near end, independent of controls
+            if showNextEpisode, let action = onNextEpisode {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button(action: action) {
+                            Label("Next Episode", systemImage: "forward.fill")
+                                .font(.headline)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 12)
+                                .background(.ultraThinMaterial, in: Capsule())
+                                .foregroundStyle(.white)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.trailing, 24)
+                    .padding(.bottom, bottomPadding + 70)
+                }
+                .transition(.move(edge: .trailing).combined(with: .opacity))
+            }
 
             if showControls {
                 LinearGradient(
@@ -237,6 +266,7 @@ struct PlayerControlsOverlay: View {
             }
             .frame(height: 20)
             .contentShape(Rectangle())
+            #if !os(tvOS)
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
@@ -253,6 +283,7 @@ struct PlayerControlsOverlay: View {
                         scheduleHide()
                     }
             )
+            #endif
             .animation(.easeInOut(duration: 0.15), value: isScrubbing)
         }
         .frame(height: 20)

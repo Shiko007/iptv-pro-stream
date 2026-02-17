@@ -17,6 +17,7 @@ enum Constants {
         static let controlsAutoHideDelay: TimeInterval = 5.0
         static let seekInterval: TimeInterval = 10.0
         static let bufferingTimeout: TimeInterval = 30.0
+        static let nextEpisodeThreshold: TimeInterval = 120
     }
 
     enum UI {

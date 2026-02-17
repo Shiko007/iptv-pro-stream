@@ -8,6 +8,7 @@ final class VLCPlayerService: NSObject {
     var currentTime: TimeInterval = 0
     var duration: TimeInterval = 0
     var isBuffering = false
+    var isEnded = false
     var error: String?
 
     private var pollTimer: Timer?
@@ -17,7 +18,7 @@ final class VLCPlayerService: NSObject {
         mediaPlayer.delegate = self
     }
 
-    func load(url: URL, headers: [String: String] = [:]) {
+    func load(url: URL, headers: [String: String] = [:], muted: Bool = false) {
         let media: VLCMedia
         if !headers.isEmpty {
             var options = [String]()
@@ -33,10 +34,17 @@ final class VLCPlayerService: NSObject {
         }
 
         mediaPlayer.media = media
+        if muted {
+            mediaPlayer.audio?.volume = 0
+        }
         isBuffering = true
         error = nil
         mediaPlayer.play()
         startPolling()
+    }
+
+    func unmute() {
+        mediaPlayer.audio?.volume = 100
     }
 
     var isActuallyPlaying: Bool {
@@ -120,6 +128,7 @@ extension VLCPlayerService: VLCMediaPlayerDelegate {
             case .ended:
                 isPlaying = false
                 isBuffering = false
+                isEnded = true
                 stopPolling()
             case .error:
                 isPlaying = false

@@ -91,9 +91,13 @@ struct SeriesDetailView: View {
                     // Episodes
                     if let season = seasons.first(where: { $0.seasonNumber == selectedSeason }) {
                         LazyVStack(alignment: .leading, spacing: 8) {
-                            ForEach(season.episodes) { episode in
+                            ForEach(Array(season.episodes.enumerated()), id: \.element.id) { index, episode in
                                 NavigationLink {
-                                    VideoPlayerView(channel: episodeToChannel(episode))
+                                    VideoPlayerView(
+                                        channel: episodeToChannel(episode),
+                                        episodes: season.episodes,
+                                        currentEpisodeIndex: index
+                                    )
                                 } label: {
                                     EpisodeRowView(episode: episode)
                                 }
