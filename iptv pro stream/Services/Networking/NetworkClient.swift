@@ -26,6 +26,19 @@ actor NetworkClient {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
+            if httpResponse.statusCode == 429 {
+                let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After")
+                print("[HTTP-429] Rate limited. Retry-After header: \(retryAfter ?? "not provided")")
+                if let retryAfter {
+                    if let seconds = Int(retryAfter) {
+                        print("[HTTP-429] Retry after \(seconds) seconds")
+                    } else {
+                        print("[HTTP-429] Retry after date: \(retryAfter)")
+                    }
+                }
+                print("[HTTP-429] URL: \(url.absoluteString)")
+                print("[HTTP-429] All response headers: \(httpResponse.allHeaderFields)")
+            }
             throw NetworkError.httpError(httpResponse.statusCode)
         }
 

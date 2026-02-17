@@ -69,7 +69,8 @@ struct HomeView: View {
                         title: "Continue Watching",
                         channels: viewModel.continueWatching,
                         watchProgress: viewModel.watchProgress,
-                        onContinueWatching: handleContinueWatching
+                        onContinueWatching: handleContinueWatching,
+                        onRemove: { viewModel.removeFromContinueWatching($0) }
                     )
                 }
 

@@ -18,7 +18,7 @@ nonisolated struct VODItem: Identifiable, Codable, Sendable, Hashable {
     var streamType: StreamType
 
     func toChannel() -> Channel {
-        Channel(
+        var channel = Channel(
             id: id,
             name: name,
             logoURL: logoURL,
@@ -27,6 +27,8 @@ nonisolated struct VODItem: Identifiable, Codable, Sendable, Hashable {
             streamType: streamType,
             providerID: providerID
         )
+        channel.streamID = seriesID
+        return channel
     }
 
     // Series-specific

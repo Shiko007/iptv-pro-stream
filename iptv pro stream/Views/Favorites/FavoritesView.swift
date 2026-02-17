@@ -19,7 +19,14 @@ struct FavoritesView: View {
                         }
                     }
                     .navigationDestination(for: Channel.self) { channel in
-                        VideoPlayerView(channel: channel)
+                        switch channel.streamType {
+                        case .series:
+                            SeriesDetailView(item: channel.toVODItem())
+                        case .movie:
+                            VODDetailView(item: channel.toVODItem())
+                        case .live:
+                            VideoPlayerView(channel: channel)
+                        }
                     }
                 }
             }

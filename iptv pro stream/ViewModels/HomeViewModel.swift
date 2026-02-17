@@ -65,6 +65,12 @@ final class HomeViewModel {
         })
     }
 
+    func removeFromContinueWatching(_ channel: Channel) {
+        try? dataManager.removeRecentlyWatched(channel.id)
+        continueWatching.removeAll { $0.id == channel.id }
+        watchProgress.removeValue(forKey: channel.id)
+    }
+
     func refresh() async {
         hasLoaded = false
         await load()

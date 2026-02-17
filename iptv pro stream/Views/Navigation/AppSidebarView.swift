@@ -27,7 +27,7 @@ struct AppSidebarView: View {
 
                 Section("Library") {
                     Label("Favorites", systemImage: "heart.fill")
-                        .tag(AppTab.search) // Reuse for now
+                        .tag(AppTab.favorites)
                     Label("Search", systemImage: "magnifyingglass")
                         .tag(AppTab.search)
                 }
@@ -54,6 +54,8 @@ struct AppSidebarView: View {
                 VODBrowserView(contentType: .movie, viewModel: moviesViewModel)
             case .series:
                 VODBrowserView(contentType: .series, viewModel: seriesViewModel)
+            case .favorites:
+                FavoritesView()
             case .search:
                 SearchView(viewModel: searchViewModel)
             case .settings:

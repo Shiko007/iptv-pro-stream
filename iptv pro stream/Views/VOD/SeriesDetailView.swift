@@ -4,6 +4,7 @@ import os
 struct SeriesDetailView: View {
     let item: VODItem
 
+    @State private var isFavorite = false
     @State private var selectedSeason: Int = 1
     @State private var seasons: [Season] = []
     @State private var isLoading = false
@@ -108,8 +109,21 @@ struct SeriesDetailView: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
-        .task {
-            await loadEpisodes()
+        .toolbar {
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    try? DataManager.shared.toggleFavorite(item.toChannel())
+                    isFavorite.toggle()
+                } label: {
+                    Image(systemName: isFavorite ? "heart.fill" : "heart")
+                        .foregroundStyle(isFavorite ? .red : .secondary)
+                }
+            }
+        }
+        .onAppear {
+            isFavorite = (try? DataManager.shared.isFavorite(item.id)) ?? false
+            guard seasons.isEmpty, !isLoading else { return }
+            Task { await loadEpisodes() }
         }
     }
 
@@ -183,7 +197,7 @@ struct SeriesDetailView: View {
     }
 
     private func episodeToChannel(_ episode: Episode) -> Channel {
-        Channel(
+        var channel = Channel(
             id: episode.id,
             name: "\(item.name) - S\(episode.seasonNumber)E\(episode.episodeNumber) - \(episode.title)",
             logoURL: episode.coverURL ?? item.logoURL,
@@ -191,6 +205,8 @@ struct SeriesDetailView: View {
             streamType: .series,
             providerID: item.providerID
         )
+        channel.streamID = item.seriesID
+        return channel
     }
 }
 

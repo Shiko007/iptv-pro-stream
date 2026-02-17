@@ -4,6 +4,7 @@ import os
 struct VODDetailView: View {
     let item: VODItem
 
+    @State private var isFavorite = false
     @State private var posterURL: String?
     @State private var backdropURL: String?
     @State private var fullPlot: String?
@@ -93,7 +94,19 @@ struct VODDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .navigationTitle(item.name)
+        .toolbar {
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    try? DataManager.shared.toggleFavorite(item.toChannel())
+                    isFavorite.toggle()
+                } label: {
+                    Image(systemName: isFavorite ? "heart.fill" : "heart")
+                        .foregroundStyle(isFavorite ? .red : .secondary)
+                }
+            }
+        }
         .task {
+            isFavorite = (try? DataManager.shared.isFavorite(item.id)) ?? false
             await loadFullInfo()
         }
     }

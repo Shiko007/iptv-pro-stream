@@ -11,6 +11,7 @@ final class FavoriteEntity {
     var streamTypeRaw: String
     var providerID: UUID
     var addedAt: Date
+    var streamID: Int?
 
     init(from channel: Channel) {
         self.channelID = channel.id
@@ -21,10 +22,11 @@ final class FavoriteEntity {
         self.streamTypeRaw = channel.streamType.rawValue
         self.providerID = channel.providerID
         self.addedAt = Date()
+        self.streamID = channel.streamID
     }
 
     func toChannel() -> Channel {
-        Channel(
+        var channel = Channel(
             id: channelID,
             name: channelName,
             logoURL: logoURL,
@@ -33,5 +35,7 @@ final class FavoriteEntity {
             streamType: StreamType(rawValue: streamTypeRaw) ?? .live,
             providerID: providerID
         )
+        channel.streamID = streamID
+        return channel
     }
 }

@@ -44,7 +44,7 @@ struct AppTabView: View {
 }
 
 enum AppTab: Hashable {
-    case home, liveTV, movies, series, search, settings
+    case home, liveTV, movies, series, favorites, search, settings
 }
 
 struct SyncingBannerView: View {

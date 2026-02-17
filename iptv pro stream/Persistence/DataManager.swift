@@ -177,6 +177,15 @@ final class DataManager {
     }
 
     @MainActor
+    func removeRecentlyWatched(_ channelID: String) throws {
+        let descriptor = FetchDescriptor<RecentlyWatchedEntity>(predicate: #Predicate { $0.channelID == channelID })
+        if let entity = try modelContext.fetch(descriptor).first {
+            modelContext.delete(entity)
+            try modelContext.save()
+        }
+    }
+
+    @MainActor
     func fetchRecentlyWatched(limit: Int = 20) throws -> [(channel: Channel, position: Double, duration: Double)] {
         var descriptor = FetchDescriptor<RecentlyWatchedEntity>(sortBy: [SortDescriptor(\.lastWatchedAt, order: .reverse)])
         descriptor.fetchLimit = limit

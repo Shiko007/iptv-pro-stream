@@ -41,6 +41,7 @@ struct HomeChannelShelfView: View {
     let channels: [Channel]
     var watchProgress: [String: Double] = [:]
     var onContinueWatching: ((Channel) -> Void)?
+    var onRemove: ((Channel) -> Void)?
 
     #if os(tvOS)
     private let cardWidth: CGFloat = 200
@@ -64,6 +65,15 @@ struct HomeChannelShelfView: View {
                                 cardView(for: channel)
                             }
                             .buttonStyle(.plain)
+                            .contextMenu {
+                                if let onRemove {
+                                    Button(role: .destructive) {
+                                        onRemove(channel)
+                                    } label: {
+                                        Label("Remove from Continue Watching", systemImage: "xmark.circle")
+                                    }
+                                }
+                            }
                         } else {
                             NavigationLink {
                                 destinationView(for: channel)
