@@ -38,9 +38,11 @@ final class PlayerViewModel {
             vlcService = service
             playerState.playbackState = .loading
             service.load(url: url, headers: headers)
+            isPlaying = true
         } else {
             playerState.currentEngine = .avPlayer
             await loadAndPlay(url: url, headers: headers)
+            isPlaying = true
         }
 
         try? dataManager.updateRecentlyWatched(channel)
@@ -65,9 +67,27 @@ final class PlayerViewModel {
 
     func togglePlayPause() {
         if playerState.currentEngine == .vlc, let vlc = vlcService {
-            if vlc.isPlaying { vlc.pause() } else { vlc.play() }
+            // Query actual VLC player state, not cached property
+            if vlc.isActuallyPlaying {
+                vlc.pause()
+                isPlaying = false
+                playerState.playbackState = .paused
+            } else {
+                vlc.play()
+                isPlaying = true
+                playerState.playbackState = .playing
+            }
         } else {
-            if isPlaying { player.pause() } else { player.play() }
+            // Query actual AVPlayer rate
+            if player.rate > 0 {
+                player.pause()
+                isPlaying = false
+                playerState.playbackState = .paused
+            } else {
+                player.play()
+                isPlaying = true
+                playerState.playbackState = .playing
+            }
         }
     }
 
@@ -119,7 +139,8 @@ final class PlayerViewModel {
 
     func syncVLCState() {
         guard playerState.currentEngine == .vlc, let vlc = vlcService else { return }
-        isPlaying = vlc.isPlaying
+        let actuallyPlaying = vlc.isActuallyPlaying
+        isPlaying = actuallyPlaying
         currentTime = vlc.currentTime
         duration = vlc.duration
         isBuffering = vlc.isBuffering
@@ -128,7 +149,7 @@ final class PlayerViewModel {
             playerState.playbackState = .error(vlcError)
         } else if vlc.isBuffering {
             playerState.playbackState = .buffering
-        } else if vlc.isPlaying {
+        } else if actuallyPlaying {
             playerState.playbackState = .playing
         } else if vlc.currentTime > 0 {
             playerState.playbackState = .paused

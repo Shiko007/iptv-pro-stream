@@ -39,12 +39,18 @@ final class VLCPlayerService: NSObject {
         startPolling()
     }
 
+    var isActuallyPlaying: Bool {
+        mediaPlayer.isPlaying
+    }
+
     func play() {
         mediaPlayer.play()
+        isPlaying = true
     }
 
     func pause() {
         mediaPlayer.pause()
+        isPlaying = false
     }
 
     func seek(to time: TimeInterval) {

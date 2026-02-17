@@ -22,7 +22,12 @@ struct HomeView: View {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     LazyHStack(spacing: 16) {
                                         ForEach(viewModel.recentlyWatched) { channel in
-                                            ChannelCardView(channel: channel)
+                                            NavigationLink {
+                                                destinationView(for: channel)
+                                            } label: {
+                                                ChannelCardView(channel: channel)
+                                            }
+                                            .buttonStyle(.plain)
                                         }
                                     }
                                     .padding(.horizontal)
@@ -38,7 +43,12 @@ struct HomeView: View {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     LazyHStack(spacing: 16) {
                                         ForEach(viewModel.favorites) { channel in
-                                            ChannelCardView(channel: channel)
+                                            NavigationLink {
+                                                destinationView(for: channel)
+                                            } label: {
+                                                ChannelCardView(channel: channel)
+                                            }
+                                            .buttonStyle(.plain)
                                         }
                                     }
                                     .padding(.horizontal)
@@ -54,5 +64,10 @@ struct HomeView: View {
                 await viewModel.load()
             }
         }
+    }
+
+    @ViewBuilder
+    private func destinationView(for channel: Channel) -> some View {
+        VideoPlayerView(channel: channel)
     }
 }

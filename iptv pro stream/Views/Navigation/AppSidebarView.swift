@@ -2,10 +2,14 @@ import SwiftUI
 
 struct AppSidebarView: View {
     @State private var selectedTab: AppTab? = .home
+    @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
     private var syncManager = SyncManager.shared
+    #if os(macOS)
+    private var fullScreenController = FullScreenPlayerController.shared
+    #endif
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             List(selection: $selectedTab) {
                 Label("Home", systemImage: "house.fill")
                     .tag(AppTab.home)
@@ -53,5 +57,12 @@ struct AppSidebarView: View {
                 HomeView()
             }
         }
+        #if os(macOS)
+        .onChange(of: fullScreenController.isFullScreen) { _, isFullScreen in
+            withAnimation {
+                columnVisibility = isFullScreen ? .detailOnly : .automatic
+            }
+        }
+        #endif
     }
 }
