@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/sherifyasser/Workspace/XCode/iptv-pro-stream log --oneline --all)",
+      "Bash(xcodebuild:*)",
+      "Bash(xcrun simctl:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}

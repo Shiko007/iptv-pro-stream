@@ -1,17 +1,14 @@
-//
-//  iptv_pro_streamApp.swift
-//  iptv pro stream
-//
-//  Created by Sherif Yasser on 16.02.26.
-//
-
 import SwiftUI
+import SwiftData
 
 @main
 struct iptv_pro_streamApp: App {
+    let dataManager = DataManager.shared
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootNavigationView()
         }
+        .modelContainer(dataManager.modelContainer)
     }
 }
