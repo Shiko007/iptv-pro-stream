@@ -6,18 +6,17 @@ actor ImageCacheService {
 
     // NSCache is thread-safe, so it can be accessed outside the actor
     nonisolated(unsafe) let memoryCache = NSCache<NSString, CacheEntry>()
-    private let fileManager = FileManager.default
-    private let cacheDirectory: URL
     private var activeFetches: [String: Task<Data?, Never>] = [:]
     private var concurrentCount = 0
     private let maxConcurrent = 6
 
     init() {
-        let paths = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)
-        cacheDirectory = paths[0].appendingPathComponent(Constants.Cache.imageCacheDirectory)
-        try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
-
         memoryCache.totalCostLimit = Constants.Cache.maxMemoryCacheMB * 1024 * 1024
+
+        // Clean up any leftover disk cache from previous versions
+        let paths = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
+        let oldCacheDir = paths[0].appendingPathComponent(Constants.Cache.imageCacheDirectory)
+        try? FileManager.default.removeItem(at: oldCacheDir)
     }
 
     func image(for urlString: String) async -> Data? {
@@ -26,13 +25,6 @@ actor ImageCacheService {
         // Check memory
         if let entry = memoryCache.object(forKey: key) {
             return entry.data
-        }
-
-        // Check disk
-        let fileURL = cacheDirectory.appendingPathComponent(urlString.hash.description)
-        if let data = try? Data(contentsOf: fileURL) {
-            memoryCache.setObject(CacheEntry(data: data), forKey: key, cost: data.count)
-            return data
         }
 
         // Deduplicate in-flight requests
@@ -55,7 +47,6 @@ actor ImageCacheService {
             do {
                 let data = try await NetworkClient.shared.fetchData(from: url)
                 memoryCache.setObject(CacheEntry(data: data), forKey: key, cost: data.count)
-                try? data.write(to: fileURL)
                 return data
             } catch {
                 return nil
@@ -70,8 +61,6 @@ actor ImageCacheService {
 
     func clearCache() {
         memoryCache.removeAllObjects()
-        try? fileManager.removeItem(at: cacheDirectory)
-        try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
     }
 }
 

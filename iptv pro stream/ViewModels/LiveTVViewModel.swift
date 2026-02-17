@@ -1,6 +1,12 @@
 import Foundation
 import os
 
+nonisolated struct ChannelShelf: Identifiable, Sendable {
+    var id: String { title }
+    var title: String
+    var channels: [Channel]
+}
+
 @Observable
 final class LiveTVViewModel {
     var channels: [Channel] = []
@@ -25,6 +31,16 @@ final class LiveTVViewModel {
         }
 
         return result
+    }
+
+    var shelves: [ChannelShelf] {
+        var grouped: [String: [Channel]] = [:]
+        for channel in filteredChannels {
+            grouped[channel.groupTitle, default: []].append(channel)
+        }
+        return grouped
+            .map { ChannelShelf(title: $0.key, channels: $0.value) }
+            .sorted { $0.channels.count > $1.channels.count }
     }
 
     func load() async {

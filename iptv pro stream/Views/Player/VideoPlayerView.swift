@@ -38,6 +38,9 @@ struct VideoPlayerView: View {
                             fullScreenController.exitFullScreen()
                         }
                         #endif
+                        vlcSyncTimer?.invalidate()
+                        vlcSyncTimer = nil
+                        viewModel.stop()
                         dismiss()
                     },
                     onToggleFullScreen: {

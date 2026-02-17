@@ -162,10 +162,18 @@ final class DataManager {
             existing.lastWatchedAt = Date()
             existing.lastPosition = position
             existing.duration = duration
+            existing.streamID = channel.streamID
         } else {
             modelContext.insert(RecentlyWatchedEntity(from: channel, position: position, duration: duration))
         }
         try modelContext.save()
+    }
+
+    @MainActor
+    func fetchSavedPosition(for channelID: String) throws -> Double? {
+        let descriptor = FetchDescriptor<RecentlyWatchedEntity>(predicate: #Predicate { $0.channelID == channelID })
+        guard let entity = try modelContext.fetch(descriptor).first, entity.lastPosition > 0 else { return nil }
+        return entity.lastPosition
     }
 
     @MainActor

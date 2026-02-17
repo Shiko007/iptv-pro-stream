@@ -14,15 +14,28 @@ struct LiveTVView: View {
                         systemImage: "tv.slash",
                         description: Text("Add a provider to view live TV channels.")
                     )
+                } else if viewModel.shelves.isEmpty {
+                    ContentUnavailableView.search
                 } else {
-                    ChannelListView(
-                        channels: viewModel.filteredChannels,
-                        categories: viewModel.categories,
-                        selectedCategory: $viewModel.selectedCategory
-                    )
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 24) {
+                            ForEach(viewModel.shelves) { shelf in
+                                HomeChannelShelfView(
+                                    title: shelf.title,
+                                    channels: shelf.channels
+                                )
+                            }
+                        }
+                        .padding(.vertical)
+                    }
                 }
             }
             .navigationTitle("Live TV")
+            #if os(macOS)
+            .toolbarBackground(.hidden, for: .windowToolbar)
+            #else
+            .toolbarBackground(.hidden, for: .navigationBar)
+            #endif
             .task {
                 await viewModel.load()
             }

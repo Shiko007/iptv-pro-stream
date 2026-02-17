@@ -2,12 +2,14 @@ import SwiftUI
 
 struct AsyncCachedImage<Placeholder: View>: View {
     let url: String?
+    let contentMode: ContentMode
     let placeholder: () -> Placeholder
     @State private var imageData: Data?
     @State private var loadFailed = false
 
-    init(url: String?, @ViewBuilder placeholder: @escaping () -> Placeholder) {
+    init(url: String?, contentMode: ContentMode = .fill, @ViewBuilder placeholder: @escaping () -> Placeholder) {
         self.url = url
+        self.contentMode = contentMode
         self.placeholder = placeholder
 
         // Synchronously check memory cache so cached images display instantly
@@ -24,7 +26,7 @@ struct AsyncCachedImage<Placeholder: View>: View {
             if let imageData, let image = platformImage(from: imageData) {
                 image
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
+                    .aspectRatio(contentMode: contentMode)
             } else if loadFailed || url == nil {
                 placeholder()
             } else {

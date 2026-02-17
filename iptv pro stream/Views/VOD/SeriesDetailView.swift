@@ -3,6 +3,7 @@ import os
 
 struct SeriesDetailView: View {
     let item: VODItem
+
     @State private var selectedSeason: Int = 1
     @State private var seasons: [Season] = []
     @State private var isLoading = false

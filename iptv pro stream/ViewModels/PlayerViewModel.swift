@@ -19,6 +19,7 @@ final class PlayerViewModel {
     private var rateObservation: NSKeyValueObservation?
     private let dataManager = DataManager.shared
     private var currentChannel: Channel?
+    private var pendingResumePosition: Double?
 
     func play(channel: Channel) async {
         currentChannel = channel
@@ -27,6 +28,7 @@ final class PlayerViewModel {
             return
         }
 
+        pendingResumePosition = try? dataManager.fetchSavedPosition(for: channel.id)
         let format = StreamFormat(fromURL: channel.streamURL)
         let headers = channel.customHeaders ?? [:]
 
@@ -139,6 +141,12 @@ final class PlayerViewModel {
 
     func syncVLCState() {
         guard playerState.currentEngine == .vlc, let vlc = vlcService else { return }
+
+        if let position = pendingResumePosition, vlc.duration > 0 {
+            pendingResumePosition = nil
+            vlc.seek(to: position)
+        }
+
         let actuallyPlaying = vlc.isActuallyPlaying
         isPlaying = actuallyPlaying
         currentTime = vlc.currentTime
@@ -179,6 +187,11 @@ final class PlayerViewModel {
                 guard let self else { return }
                 switch item.status {
                 case .readyToPlay:
+                    if let position = self.pendingResumePosition {
+                        self.pendingResumePosition = nil
+                        let seekTime = CMTime(seconds: position, preferredTimescale: 600)
+                        self.player.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero)
+                    }
                     self.playerState.playbackState = .playing
                 case .failed:
                     let errorMsg = item.error?.localizedDescription ?? "Playback failed"

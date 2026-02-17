@@ -19,48 +19,27 @@ struct VODBrowserView: View {
                         systemImage: "film.stack",
                         description: Text("Add a provider with VOD content to browse.")
                     )
+                } else if viewModel.shelves.isEmpty {
+                    ContentUnavailableView.search
                 } else {
                     ScrollView {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 16)], spacing: 16) {
-                            ForEach(viewModel.filteredItems) { item in
-                                NavigationLink {
-                                    if item.streamType == .series {
-                                        SeriesDetailView(item: item)
-                                    } else {
-                                        VODDetailView(item: item)
-                                    }
-                                } label: {
-                                    VODCardView(item: item)
-                                }
+                        LazyVStack(alignment: .leading, spacing: 24) {
+                            ForEach(viewModel.shelves) { shelf in
+                                HomeVODShelfView(
+                                    title: shelf.title,
+                                    items: shelf.items
+                                )
                             }
                         }
-                        .padding()
+                        .padding(.vertical)
                     }
                 }
             }
             .navigationTitle(contentType == .movie ? "Movies" : "Series")
-            #if os(iOS)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    if !viewModel.categories.isEmpty {
-                        Menu {
-                            Button("All") {
-                                viewModel.selectedCategory = nil
-                            }
-                            ForEach(viewModel.categories, id: \.self) { category in
-                                Button(category) {
-                                    viewModel.selectedCategory = category
-                                }
-                            }
-                        } label: {
-                            Label(
-                                viewModel.selectedCategory ?? "All Categories",
-                                systemImage: "line.3.horizontal.decrease.circle"
-                            )
-                        }
-                    }
-                }
-            }
+            #if os(macOS)
+            .toolbarBackground(.hidden, for: .windowToolbar)
+            #else
+            .toolbarBackground(.hidden, for: .navigationBar)
             #endif
             .searchable(text: $viewModel.searchText, prompt: "Search \(contentType == .movie ? "movies" : "series")")
             .task {
@@ -69,6 +48,13 @@ struct VODBrowserView: View {
             .onReceive(NotificationCenter.default.publisher(for: SyncManager.didFinishSyncing)) { _ in
                 Task {
                     await viewModel.reload()
+                }
+            }
+            .navigationDestination(for: VODItem.self) { item in
+                if item.streamType == .series {
+                    SeriesDetailView(item: item)
+                } else {
+                    VODDetailView(item: item)
                 }
             }
         }

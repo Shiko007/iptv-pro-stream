@@ -13,6 +13,7 @@ final class RecentlyWatchedEntity {
     var lastPosition: Double
     var duration: Double
     var groupTitle: String
+    var streamID: Int?
 
     init(from channel: Channel, position: Double = 0, duration: Double = 0) {
         self.channelID = channel.id
@@ -25,10 +26,11 @@ final class RecentlyWatchedEntity {
         self.lastPosition = position
         self.duration = duration
         self.groupTitle = channel.groupTitle
+        self.streamID = channel.streamID
     }
 
     func toChannel() -> Channel {
-        Channel(
+        var channel = Channel(
             id: channelID,
             name: channelName,
             logoURL: logoURL,
@@ -37,5 +39,7 @@ final class RecentlyWatchedEntity {
             streamType: StreamType(rawValue: streamTypeRaw) ?? .live,
             providerID: providerID
         )
+        channel.streamID = streamID
+        return channel
     }
 }
