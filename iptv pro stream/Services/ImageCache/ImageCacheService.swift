@@ -64,7 +64,7 @@ actor ImageCacheService {
     }
 }
 
-final class CacheEntry: NSObject {
+nonisolated final class CacheEntry: NSObject {
     let data: Data
     init(data: Data) { self.data = data }
 }

@@ -16,7 +16,7 @@ nonisolated struct M3UParser: Sendable {
         var order = 0
         var currentGroupFromExtGrp: String?
 
-        for (index, line) in lines.enumerated() {
+        for line in lines {
             let trimmedLine = line.trimmed
 
             if trimmedLine.isEmpty { continue }

@@ -11,10 +11,7 @@ final class EPGViewModel {
 
     func load() async {
         isLoading = true
-        defer { isLoading = false }
-
-        // EPG data will be populated when providers are synced
-        // For now, this serves as the structure
+        isLoading = false
     }
 
     func programmes(for channelID: String) -> [EPGProgramme] {

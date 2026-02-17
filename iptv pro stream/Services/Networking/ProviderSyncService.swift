@@ -41,9 +41,11 @@ actor ProviderSyncService {
         }
 
         // Cache channels to SwiftData
+        let channelsToCache = result.channels
+        let providerID = provider.id
         await MainActor.run {
             do {
-                try DataManager.shared.cacheChannels(result.channels, for: provider.id, streamType: .live)
+                try DataManager.shared.cacheChannels(channelsToCache, for: providerID, streamType: .live)
             } catch {
                 AppLogger.data.error("Failed to cache channels: \(error)")
             }
@@ -75,7 +77,7 @@ actor ProviderSyncService {
 
         for (index, stream) in liveStreams.enumerated() {
             guard let streamId = stream.streamId, let name = stream.name else { continue }
-            let streamURL = await api.liveStreamURL(streamID: streamId)
+            let streamURL = api.liveStreamURL(streamID: streamId)
             var channel = Channel(
                 id: "\(provider.id)-live-\(streamId)",
                 name: name,
@@ -106,9 +108,11 @@ actor ProviderSyncService {
         }
 
         // Cache live channels
+        let liveChannelsToCache = channels
+        let xtreamProviderID = provider.id
         await MainActor.run {
             do {
-                try DataManager.shared.cacheChannels(channels, for: provider.id, streamType: .live)
+                try DataManager.shared.cacheChannels(liveChannelsToCache, for: xtreamProviderID, streamType: .live)
             } catch {
                 AppLogger.data.error("Failed to cache Xtream live channels: \(error)")
             }
@@ -126,7 +130,7 @@ actor ProviderSyncService {
             for (index, vod) in vodStreams.enumerated() {
                 guard let streamId = vod.streamId, let name = vod.name else { continue }
                 let ext = vod.containerExtension ?? "mp4"
-                let streamURL = await api.vodStreamURL(streamID: streamId, extension: ext)
+                let streamURL = api.vodStreamURL(streamID: streamId, extension: ext)
                 let groupTitle = vod.categoryId.flatMap { vodCategoryMap[$0] } ?? "Uncategorized"
                 var channel = Channel(
                     id: "\(provider.id)-movie-\(streamId)",
@@ -150,9 +154,10 @@ actor ProviderSyncService {
                 vodChannels.append(channel)
             }
 
+            let vodToCache = vodChannels
             await MainActor.run {
                 do {
-                    try DataManager.shared.cacheChannels(vodChannels, for: provider.id, streamType: .movie)
+                    try DataManager.shared.cacheChannels(vodToCache, for: xtreamProviderID, streamType: .movie)
                 } catch {
                     AppLogger.data.error("Failed to cache VOD channels: \(error)")
                 }
@@ -192,9 +197,10 @@ actor ProviderSyncService {
                 seriesChannels.append(channel)
             }
 
+            let seriesToCache = seriesChannels
             await MainActor.run {
                 do {
-                    try DataManager.shared.cacheChannels(seriesChannels, for: provider.id, streamType: .series)
+                    try DataManager.shared.cacheChannels(seriesToCache, for: xtreamProviderID, streamType: .series)
                 } catch {
                     AppLogger.data.error("Failed to cache series channels: \(error)")
                 }

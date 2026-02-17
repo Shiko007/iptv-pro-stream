@@ -16,7 +16,7 @@ final class EPGXMLParser: NSObject, XMLParserDelegate, Sendable {
     }
 }
 
-private final class EPGXMLParserDelegate: NSObject, XMLParserDelegate {
+nonisolated private final class EPGXMLParserDelegate: NSObject, XMLParserDelegate {
     var programmes: [EPGProgramme] = []
 
     private var currentElement = ""

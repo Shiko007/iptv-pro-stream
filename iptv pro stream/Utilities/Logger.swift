@@ -1,7 +1,7 @@
 import Foundation
 import os
 
-enum AppLogger {
+nonisolated enum AppLogger {
     private static let subsystem = Constants.App.bundleID
 
     static let general = Logger(subsystem: subsystem, category: "General")

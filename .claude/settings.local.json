@@ -6,7 +6,10 @@
       "Bash(xcrun simctl:*)",
       "WebSearch",
       "WebFetch(domain:github.com)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(xargs rm:*)",
+      "Bash(sips:*)",
+      "Bash(xattr:*)"
     ]
   }
 }

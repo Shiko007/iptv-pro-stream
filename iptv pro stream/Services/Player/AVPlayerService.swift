@@ -52,8 +52,8 @@ final class AVPlayerService {
             forInterval: CMTime(seconds: 0.5, preferredTimescale: 600),
             queue: .main
         ) { [weak self] time in
+            guard let self else { return }
             Task { @MainActor in
-                guard let self else { return }
                 self.currentTime = time.seconds
                 if let item = self.player.currentItem, item.duration.isNumeric {
                     self.duration = item.duration.seconds
@@ -62,8 +62,8 @@ final class AVPlayerService {
         }
 
         statusObservation = player.currentItem?.observe(\.status) { [weak self] item, _ in
+            guard let self else { return }
             Task { @MainActor in
-                guard let self else { return }
                 if item.status == .failed {
                     self.error = item.error?.localizedDescription ?? "Playback failed"
                 }
@@ -71,8 +71,8 @@ final class AVPlayerService {
         }
 
         bufferObservation = player.currentItem?.observe(\.isPlaybackBufferEmpty) { [weak self] item, _ in
+            guard let self else { return }
             Task { @MainActor in
-                guard let self else { return }
                 self.isBuffering = item.isPlaybackBufferEmpty
             }
         }

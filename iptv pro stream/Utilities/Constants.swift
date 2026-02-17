@@ -1,6 +1,6 @@
 import Foundation
 
-enum Constants {
+nonisolated enum Constants {
     enum App {
         static let name = "IPTV Pro Stream"
         static let bundleID = "com.sandybytes.iptv-pro-stream"

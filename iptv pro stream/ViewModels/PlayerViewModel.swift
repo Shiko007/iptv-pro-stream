@@ -24,7 +24,6 @@ final class PlayerViewModel {
     private var pendingResumePosition: Double?
 
     func play(channel: Channel) async {
-        print("[RESUME-DEBUG] play() called for channel: \(channel.name)")
         currentChannel = channel
         guard let url = URL(string: channel.streamURL) else {
             playerState.playbackState = .error("Invalid URL")
@@ -33,10 +32,8 @@ final class PlayerViewModel {
 
         pendingResumePosition = try? dataManager.fetchSavedPosition(for: channel.id)
         isResuming = pendingResumePosition != nil
-        print("[RESUME-DEBUG] pendingResumePosition=\(String(describing: pendingResumePosition)), isResuming=\(isResuming)")
         if isResuming {
             player.isMuted = true
-            print("[RESUME-DEBUG] player.isMuted = true")
         }
         let format = StreamFormat(fromURL: channel.streamURL)
         let headers = channel.customHeaders ?? [:]
@@ -44,7 +41,6 @@ final class PlayerViewModel {
         AppLogger.player.info("Playing: \(url.absoluteString) (format: \(format.rawValue))")
 
         if PlayerManager.shared.shouldUseVLC(for: format) {
-            print("[RESUME-DEBUG] Using VLC engine")
             playerState.currentEngine = .vlc
             let service = VLCPlayerService()
             vlcService = service
@@ -52,10 +48,8 @@ final class PlayerViewModel {
             service.load(url: url, headers: headers, muted: isResuming)
             isPlaying = true
         } else {
-            print("[RESUME-DEBUG] Using AVPlayer engine")
             playerState.currentEngine = .avPlayer
             await loadAndPlay(url: url, headers: headers)
-            print("[RESUME-DEBUG] loadAndPlay completed, setting isPlaying=true")
             isPlaying = true
         }
 
@@ -78,15 +72,10 @@ final class PlayerViewModel {
 
         let item = AVPlayerItem(asset: asset)
         player.replaceCurrentItem(with: item)
-        print("[RESUME-DEBUG] Item attached (muted=\(player.isMuted), rate=\(player.rate), pendingResume=\(String(describing: pendingResumePosition)))")
         observePlayer()
 
-        // If resuming, player stays paused+muted; readyToPlay handler will seek then play
         if pendingResumePosition == nil {
-            print("[RESUME-DEBUG] Normal play path, calling player.play()")
             player.play()
-        } else {
-            print("[RESUME-DEBUG] Resume path, deferring play until seek completes")
         }
     }
 
@@ -206,8 +195,8 @@ final class PlayerViewModel {
             forInterval: CMTime(seconds: 0.5, preferredTimescale: 600),
             queue: .main
         ) { [weak self] time in
+            guard let self else { return }
             Task { @MainActor in
-                guard let self else { return }
                 self.currentTime = time.seconds
                 if let duration = self.player.currentItem?.duration, duration.isNumeric {
                     self.duration = duration.seconds
@@ -216,18 +205,15 @@ final class PlayerViewModel {
         }
 
         statusObservation = player.currentItem?.observe(\.status, options: [.new]) { [weak self] item, _ in
+            guard let self else { return }
             Task { @MainActor in
-                guard let self else { return }
                 switch item.status {
                 case .readyToPlay:
-                    print("[RESUME-DEBUG] readyToPlay fired, pendingResumePosition=\(String(describing: self.pendingResumePosition)), rate=\(self.player.rate), muted=\(self.player.isMuted)")
                     if let position = self.pendingResumePosition {
                         self.pendingResumePosition = nil
-                        print("[RESUME-DEBUG] Seeking to \(position)s...")
                         let seekTime = CMTime(seconds: position, preferredTimescale: 600)
                         self.player.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero) { finished in
                             Task { @MainActor in
-                                print("[RESUME-DEBUG] Seek finished=\(finished), unmuting and playing")
                                 self.player.isMuted = false
                                 self.isResuming = false
                                 self.player.play()
@@ -235,7 +221,6 @@ final class PlayerViewModel {
                             }
                         }
                     } else {
-                        print("[RESUME-DEBUG] No resume position, setting .playing")
                         self.playerState.playbackState = .playing
                     }
                 case .failed:
@@ -253,16 +238,17 @@ final class PlayerViewModel {
             object: player.currentItem,
             queue: .main
         ) { [weak self] _ in
+            guard let self else { return }
             Task { @MainActor in
-                guard let self else { return }
                 self.isPlaying = false
                 self.playerState.playbackState = .ended
             }
         }
 
         rateObservation = player.observe(\.rate, options: [.new]) { [weak self] player, _ in
+            guard let self else { return }
             Task { @MainActor in
-                guard let self, !self.isResuming else { return }
+                guard !self.isResuming else { return }
                 self.isPlaying = player.rate > 0
                 if player.rate > 0 {
                     self.playerState.playbackState = .playing

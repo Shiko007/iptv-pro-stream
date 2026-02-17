@@ -25,7 +25,6 @@ actor XtreamCodesAPI {
     // MARK: - Authentication
 
     func authenticate() async throws -> XtreamAuthResponse {
-        guard let url = apiURL(action: "") else { throw NetworkError.invalidURL }
         // For auth, we just need username/password without action
         var components = URLComponents(string: config.playerAPIURL)
         components?.queryItems = [
@@ -106,19 +105,19 @@ actor XtreamCodesAPI {
 
     // MARK: - URL Construction
 
-    func liveStreamURL(streamID: Int, extension ext: String = "m3u8") -> String {
+    nonisolated func liveStreamURL(streamID: Int, extension ext: String = "m3u8") -> String {
         "\(config.liveStreamURL)/\(streamID).\(ext)"
     }
 
-    func vodStreamURL(streamID: Int, extension ext: String) -> String {
+    nonisolated func vodStreamURL(streamID: Int, extension ext: String) -> String {
         "\(config.vodStreamURL)/\(streamID).\(ext)"
     }
 
-    func seriesStreamURL(streamID: Int, extension ext: String) -> String {
+    nonisolated func seriesStreamURL(streamID: Int, extension ext: String) -> String {
         "\(config.seriesStreamURL)/\(streamID).\(ext)"
     }
 
-    func timeshiftURL(streamID: Int, start: String, duration: String) -> String {
+    nonisolated func timeshiftURL(streamID: Int, start: String, duration: String) -> String {
         let base = config.baseURL
         return "\(base)/timeshift/\(config.username)/\(config.password)/\(duration)/\(start)/\(streamID).ts"
     }
@@ -126,7 +125,7 @@ actor XtreamCodesAPI {
 
 // MARK: - Flexible Decoding Helpers
 
-private extension KeyedDecodingContainer {
+nonisolated private extension KeyedDecodingContainer {
     /// Decodes a value that may arrive as either a String or a number from the Xtream API.
     func flexibleString(forKey key: Key) -> String? {
         if let string = try? decodeIfPresent(String.self, forKey: key) {

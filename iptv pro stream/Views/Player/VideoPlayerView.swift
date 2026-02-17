@@ -76,20 +76,13 @@ struct VideoPlayerView: View {
         #endif
         .task {
             guard viewModel == nil else { return }
-            print("[RESUME-DEBUG] VideoPlayerView.task started")
             let vm = PlayerViewModel()
-            // Pre-set isResuming before exposing vm to the view
-            // so SwiftUI never renders a frame with the player visible before seek
             let hasSavedPosition = (try? DataManager.shared.fetchSavedPosition(for: channel.id)) != nil
-            print("[RESUME-DEBUG] hasSavedPosition=\(hasSavedPosition)")
             if hasSavedPosition {
                 vm.isResuming = true
             }
-            print("[RESUME-DEBUG] Setting viewModel (isResuming=\(vm.isResuming))")
             self.viewModel = vm
-            print("[RESUME-DEBUG] Calling vm.play()")
             await vm.play(channel: channel)
-            print("[RESUME-DEBUG] vm.play() returned, isResuming=\(vm.isResuming)")
             startVLCSyncIfNeeded(vm)
 
             // Load episode list for series if not already provided

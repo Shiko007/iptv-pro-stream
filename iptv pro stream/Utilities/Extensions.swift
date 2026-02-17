@@ -2,11 +2,11 @@ import Foundation
 import SwiftUI
 
 extension String {
-    var trimmed: String {
+    nonisolated var trimmed: String {
         trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    var isValidURL: Bool {
+    nonisolated var isValidURL: Bool {
         guard let url = URL(string: self) else { return false }
         return url.scheme == "http" || url.scheme == "https"
     }
