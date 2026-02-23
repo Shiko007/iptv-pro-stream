@@ -9,6 +9,7 @@ struct SeriesDetailView: View {
     @State private var seasons: [Season] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var watchProgress: [String: Double] = [:]
 
     var body: some View {
         ScrollView {
@@ -99,7 +100,7 @@ struct SeriesDetailView: View {
                                         currentEpisodeIndex: index
                                     )
                                 } label: {
-                                    EpisodeRowView(episode: episode)
+                                    EpisodeRowView(episode: episode, progress: watchProgress[episode.id])
                                 }
                             }
                         }
@@ -126,6 +127,7 @@ struct SeriesDetailView: View {
         }
         .onAppear {
             isFavorite = (try? DataManager.shared.isFavorite(item.id)) ?? false
+            watchProgress = (try? DataManager.shared.fetchWatchProgress()) ?? [:]
             guard seasons.isEmpty, !isLoading else { return }
             Task { await loadEpisodes() }
         }
@@ -216,29 +218,37 @@ struct SeriesDetailView: View {
 
 struct EpisodeRowView: View {
     let episode: Episode
+    var progress: Double?
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("E\(episode.episodeNumber) - \(episode.title)")
-                    .font(.headline)
-                if let duration = episode.duration {
-                    Text(duration)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+        VStack(spacing: 0) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("E\(episode.episodeNumber) - \(episode.title)")
+                        .font(.headline)
+                    if let duration = episode.duration {
+                        Text(duration)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    if let plot = episode.plot {
+                        Text(plot)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
                 }
-                if let plot = episode.plot {
-                    Text(plot)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
+                Spacer()
+                Image(systemName: "play.circle")
+                    .font(.title2)
+                    .foregroundStyle(.tint)
             }
-            Spacer()
-            Image(systemName: "play.circle")
-                .font(.title2)
-                .foregroundStyle(.tint)
+            .padding(.vertical, 4)
+
+            if let progress, progress > 0 {
+                WatchProgressBar(progress: progress)
+                    .padding(.top, 4)
+            }
         }
-        .padding(.vertical, 4)
     }
 }

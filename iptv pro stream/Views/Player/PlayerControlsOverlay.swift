@@ -12,6 +12,7 @@ struct PlayerControlsOverlay: View {
     @State private var hideTask: Task<Void, Never>?
     @State private var isScrubbing = false
     @State private var scrubProgress: Double = 0
+    @State private var hoverProgress: Double?
 
     private var effectiveProgress: Double {
         if isScrubbing { return scrubProgress }
@@ -263,9 +264,36 @@ struct PlayerControlsOverlay: View {
                     .frame(width: thumbSize, height: thumbSize)
                     .shadow(color: .black.opacity(0.3), radius: 2)
                     .offset(x: width * progress - thumbSize / 2)
+
+                #if !os(tvOS)
+                if viewModel.duration > 0 {
+                    let tooltipProgress: Double? = isScrubbing ? scrubProgress : hoverProgress
+                    if let tooltipProgress {
+                        let tooltipTime = tooltipProgress * viewModel.duration
+                        Text(formatTime(tooltipTime))
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(.black.opacity(0.8), in: Capsule())
+                            .offset(x: width * tooltipProgress - 24, y: -24)
+                            .allowsHitTesting(false)
+                    }
+                }
+                #endif
             }
             .frame(height: 20)
             .contentShape(Rectangle())
+            #if os(macOS)
+            .onContinuousHover { phase in
+                switch phase {
+                case .active(let location):
+                    hoverProgress = min(max(location.x / width, 0), 1)
+                case .ended:
+                    hoverProgress = nil
+                }
+            }
+            #endif
             #if !os(tvOS)
             .gesture(
                 DragGesture(minimumDistance: 0)

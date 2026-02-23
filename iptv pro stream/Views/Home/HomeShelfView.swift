@@ -5,6 +5,7 @@ import SwiftUI
 struct HomeVODShelfView: View {
     let title: String
     let items: [VODItem]
+    var watchProgress: [String: Double] = [:]
 
     #if os(tvOS)
     private let cardWidth: CGFloat = 200
@@ -22,7 +23,7 @@ struct HomeVODShelfView: View {
                 LazyHStack(spacing: 12) {
                     ForEach(items) { item in
                         NavigationLink(value: item) {
-                            VODCardView(item: item)
+                            VODCardView(item: item, progress: watchProgress[item.id])
                                 .frame(width: cardWidth)
                         }
                         .buttonStyle(.plain)

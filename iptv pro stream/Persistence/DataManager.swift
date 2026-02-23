@@ -200,6 +200,16 @@ final class DataManager {
     }
 
     @MainActor
+    func fetchWatchProgress() throws -> [String: Double] {
+        let descriptor = FetchDescriptor<RecentlyWatchedEntity>()
+        let entities = try modelContext.fetch(descriptor)
+        return Dictionary(uniqueKeysWithValues: entities.compactMap { entity in
+            guard entity.duration > 0 else { return nil }
+            return (entity.channelID, entity.lastPosition / entity.duration)
+        })
+    }
+
+    @MainActor
     func fetchRecentlyWatched(limit: Int = 20) throws -> [(channel: Channel, position: Double, duration: Double)] {
         var descriptor = FetchDescriptor<RecentlyWatchedEntity>(sortBy: [SortDescriptor(\.lastWatchedAt, order: .reverse)])
         descriptor.fetchLimit = limit

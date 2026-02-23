@@ -63,6 +63,7 @@ struct VideoPlayerView: View {
                     isFullScreen: isFullScreen,
                     onNextEpisode: nextEpisode != nil ? { playNextEpisode() } : nil
                 )
+                .ignoresSafeArea()
             } else {
                 ProgressView()
                     .foregroundStyle(.white)
@@ -70,7 +71,7 @@ struct VideoPlayerView: View {
         }
         #if os(macOS)
         .navigationTitle("")
-        .toolbar(isFullScreen ? .hidden : .automatic)
+        .toolbar(.hidden, for: .windowToolbar)
         #else
         .navigationBarHidden(true)
         #endif
@@ -98,8 +99,14 @@ struct VideoPlayerView: View {
                 dismiss()
             }
         }
+        #if os(macOS)
+        .onAppear {
+            fullScreenController.isVideoPlaying = true
+        }
+        #endif
         .onDisappear {
             #if os(macOS)
+            fullScreenController.isVideoPlaying = false
             fullScreenController.exitFullScreen()
             #endif
             vlcSyncTimer?.invalidate()

@@ -67,7 +67,12 @@ struct AppSidebarView: View {
         #if os(macOS)
         .onChange(of: fullScreenController.isFullScreen) { _, isFullScreen in
             withAnimation {
-                columnVisibility = isFullScreen ? .detailOnly : .automatic
+                columnVisibility = (isFullScreen || fullScreenController.isVideoPlaying) ? .detailOnly : .automatic
+            }
+        }
+        .onChange(of: fullScreenController.isVideoPlaying) { _, isVideoPlaying in
+            withAnimation {
+                columnVisibility = (isVideoPlaying || fullScreenController.isFullScreen) ? .detailOnly : .automatic
             }
         }
         #endif

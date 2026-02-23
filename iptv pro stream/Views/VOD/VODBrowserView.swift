@@ -27,7 +27,8 @@ struct VODBrowserView: View {
                             ForEach(viewModel.shelves) { shelf in
                                 HomeVODShelfView(
                                     title: shelf.title,
-                                    items: shelf.items
+                                    items: shelf.items,
+                                    watchProgress: viewModel.watchProgress
                                 )
                             }
                         }
@@ -49,6 +50,9 @@ struct VODBrowserView: View {
                 Task {
                     await viewModel.reload()
                 }
+            }
+            .onAppear {
+                viewModel.refreshProgress()
             }
             .navigationDestination(for: VODItem.self) { item in
                 if item.streamType == .series {

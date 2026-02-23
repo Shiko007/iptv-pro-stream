@@ -9,6 +9,7 @@ final class VODViewModel {
     var searchText = ""
     var isLoading = false
     var errorMessage: String?
+    var watchProgress: [String: Double] = [:]
 
     private let dataManager = DataManager.shared
     private var contentType: VODContentType = .movie
@@ -70,6 +71,7 @@ final class VODViewModel {
             }
 
             categories = Array(Set(items.map { $0.categoryID })).sorted()
+            watchProgress = (try? dataManager.fetchWatchProgress()) ?? [:]
             hasLoaded = true
         } catch {
             errorMessage = error.localizedDescription
@@ -80,5 +82,9 @@ final class VODViewModel {
     func reload() async {
         hasLoaded = false
         await load(type: contentType)
+    }
+
+    func refreshProgress() {
+        watchProgress = (try? dataManager.fetchWatchProgress()) ?? [:]
     }
 }

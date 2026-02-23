@@ -6,6 +6,7 @@ import AppKit
 final class FullScreenPlayerController {
     static let shared = FullScreenPlayerController()
     var isFullScreen = false
+    var isVideoPlaying = false
 
     private var observation: NSObjectProtocol?
 
