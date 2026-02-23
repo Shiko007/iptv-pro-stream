@@ -18,6 +18,12 @@ struct VideoPlayerView: View {
         self._currentEpisodeIndex = State(initialValue: currentEpisodeIndex)
     }
 
+    private var previousEpisode: Episode? {
+        guard let episodes, let index = currentEpisodeIndex,
+              index - 1 >= 0 else { return nil }
+        return episodes[index - 1]
+    }
+
     private var nextEpisode: Episode? {
         guard let episodes, let index = currentEpisodeIndex,
               index + 1 < episodes.count else { return nil }
@@ -61,6 +67,7 @@ struct VideoPlayerView: View {
                         #endif
                     },
                     isFullScreen: isFullScreen,
+                    onPreviousEpisode: previousEpisode != nil ? { playPreviousEpisode() } : nil,
                     onNextEpisode: nextEpisode != nil ? { playNextEpisode() } : nil
                 )
                 .ignoresSafeArea()
@@ -115,20 +122,36 @@ struct VideoPlayerView: View {
         }
     }
 
-    private func playNextEpisode() {
-        guard let next = nextEpisode, let index = currentEpisodeIndex else { return }
-        let nextChannel = episodeToChannel(next)
+    private func playPreviousEpisode() {
+        guard let prev = previousEpisode, let index = currentEpisodeIndex else { return }
+        let prevChannel = episodeToChannel(prev)
 
-        // Stop current playback
         vlcSyncTimer?.invalidate()
         vlcSyncTimer = nil
         viewModel?.stop()
 
-        // Advance state
+        currentEpisodeIndex = index - 1
+        channel = prevChannel
+
+        let vm = PlayerViewModel()
+        self.viewModel = vm
+        Task {
+            await vm.play(channel: prevChannel)
+            startVLCSyncIfNeeded(vm)
+        }
+    }
+
+    private func playNextEpisode() {
+        guard let next = nextEpisode, let index = currentEpisodeIndex else { return }
+        let nextChannel = episodeToChannel(next)
+
+        vlcSyncTimer?.invalidate()
+        vlcSyncTimer = nil
+        viewModel?.stop()
+
         currentEpisodeIndex = index + 1
         channel = nextChannel
 
-        // Create new view model and start playback
         let vm = PlayerViewModel()
         self.viewModel = vm
         Task {

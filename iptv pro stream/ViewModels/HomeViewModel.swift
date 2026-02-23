@@ -57,16 +57,32 @@ final class HomeViewModel {
     }
 
     private func loadRecentlyWatched() {
-        guard let entries = try? dataManager.fetchRecentlyWatched(limit: 10) else { return }
-        continueWatching = entries.map { $0.channel }
-        watchProgress = Dictionary(uniqueKeysWithValues: entries.compactMap { entry in
+        guard let entries = try? dataManager.fetchRecentlyWatched(limit: 50) else { return }
+
+        // Filter out fully watched items and deduplicate series (keep latest episode only)
+        var seenSeries: Set<Int> = []
+        var filtered: [(channel: Channel, position: Double, duration: Double)] = []
+        for entry in entries {
+            // Skip fully watched
+            guard entry.duration > 0, entry.position < entry.duration else { continue }
+            // For series, only keep the most recent episode per series
+            if entry.channel.streamType == .series, let seriesID = entry.channel.streamID {
+                guard !seenSeries.contains(seriesID) else { continue }
+                seenSeries.insert(seriesID)
+            }
+            filtered.append(entry)
+            if filtered.count >= 10 { break }
+        }
+
+        continueWatching = filtered.map { $0.channel }
+        watchProgress = Dictionary(uniqueKeysWithValues: filtered.compactMap { entry in
             guard entry.duration > 0 else { return nil }
             return (entry.channel.id, entry.position / entry.duration)
         })
     }
 
     func removeFromContinueWatching(_ channel: Channel) {
-        try? dataManager.removeRecentlyWatched(channel.id)
+        try? dataManager.hideFromContinueWatching(channel.id)
         continueWatching.removeAll { $0.id == channel.id }
         watchProgress.removeValue(forKey: channel.id)
     }

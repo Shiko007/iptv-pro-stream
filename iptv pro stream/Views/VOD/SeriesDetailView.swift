@@ -131,6 +131,9 @@ struct SeriesDetailView: View {
             guard seasons.isEmpty, !isLoading else { return }
             Task { await loadEpisodes() }
         }
+        .onReceive(NotificationCenter.default.publisher(for: PlayerViewModel.didStopPlayback)) { _ in
+            watchProgress = (try? DataManager.shared.fetchWatchProgress()) ?? [:]
+        }
     }
 
     private func loadEpisodes() async {

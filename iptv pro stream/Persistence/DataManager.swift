@@ -163,6 +163,7 @@ final class DataManager {
             existing.lastPosition = position
             existing.duration = duration
             existing.streamID = channel.streamID
+            existing.hiddenFromContinueWatching = false
         } else {
             modelContext.insert(RecentlyWatchedEntity(from: channel, position: position, duration: duration))
         }
@@ -200,6 +201,26 @@ final class DataManager {
     }
 
     @MainActor
+    func hideFromContinueWatching(_ channelID: String) throws {
+        let descriptor = FetchDescriptor<RecentlyWatchedEntity>(predicate: #Predicate { $0.channelID == channelID })
+        guard let entity = try modelContext.fetch(descriptor).first else { return }
+
+        // For series, hide all episodes of the same series
+        if let seriesID = entity.streamID, entity.streamTypeRaw == StreamType.series.rawValue {
+            let seriesDescriptor = FetchDescriptor<RecentlyWatchedEntity>(predicate: #Predicate {
+                $0.streamID == seriesID
+            })
+            for seriesEntity in try modelContext.fetch(seriesDescriptor) {
+                seriesEntity.hiddenFromContinueWatching = true
+            }
+        } else {
+            entity.hiddenFromContinueWatching = true
+        }
+
+        try modelContext.save()
+    }
+
+    @MainActor
     func fetchWatchProgress() throws -> [String: Double] {
         let descriptor = FetchDescriptor<RecentlyWatchedEntity>()
         let entities = try modelContext.fetch(descriptor)
@@ -211,7 +232,10 @@ final class DataManager {
 
     @MainActor
     func fetchRecentlyWatched(limit: Int = 20) throws -> [(channel: Channel, position: Double, duration: Double)] {
-        var descriptor = FetchDescriptor<RecentlyWatchedEntity>(sortBy: [SortDescriptor(\.lastWatchedAt, order: .reverse)])
+        var descriptor = FetchDescriptor<RecentlyWatchedEntity>(
+            predicate: #Predicate { $0.hiddenFromContinueWatching == false },
+            sortBy: [SortDescriptor(\.lastWatchedAt, order: .reverse)]
+        )
         descriptor.fetchLimit = limit
         return try modelContext.fetch(descriptor).map { ($0.toChannel(), $0.lastPosition, $0.duration) }
     }

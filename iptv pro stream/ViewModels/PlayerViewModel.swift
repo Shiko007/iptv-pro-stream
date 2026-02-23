@@ -3,6 +3,10 @@ import AVFoundation
 import Combine
 import os
 
+extension PlayerViewModel {
+    static let didStopPlayback = Notification.Name("PlayerViewModel.didStopPlayback")
+}
+
 @Observable
 final class PlayerViewModel {
     var playerState = PlayerState()
@@ -53,10 +57,6 @@ final class PlayerViewModel {
             isPlaying = true
         }
 
-        // For series, remove previous episodes of the same series so only the latest shows
-        if channel.streamType == .series, let seriesID = channel.streamID {
-            try? dataManager.removeRecentlyWatchedBySeries(seriesID: seriesID, except: channel.id)
-        }
         try? dataManager.updateRecentlyWatched(channel)
     }
 
@@ -138,8 +138,8 @@ final class PlayerViewModel {
         if let channel = currentChannel, duration > 0 {
             let remaining = duration - currentTime
             if remaining <= Constants.Player.nextEpisodeThreshold {
-                // Near the end — remove from continue watching
-                try? dataManager.removeRecentlyWatched(channel.id)
+                // Near the end — mark as fully watched
+                try? dataManager.updateRecentlyWatched(channel, position: duration, duration: duration)
             } else {
                 try? dataManager.updateRecentlyWatched(channel, position: currentTime, duration: duration)
             }
@@ -153,6 +153,8 @@ final class PlayerViewModel {
             player.replaceCurrentItem(with: nil)
             removeObservers()
         }
+
+        NotificationCenter.default.post(name: PlayerViewModel.didStopPlayback, object: nil)
     }
 
     // MARK: - Sync VLC state

@@ -54,6 +54,9 @@ struct VODBrowserView: View {
             .onAppear {
                 viewModel.refreshProgress()
             }
+            .onReceive(NotificationCenter.default.publisher(for: PlayerViewModel.didStopPlayback)) { _ in
+                viewModel.refreshProgress()
+            }
             .navigationDestination(for: VODItem.self) { item in
                 if item.streamType == .series {
                     SeriesDetailView(item: item)

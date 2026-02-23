@@ -14,6 +14,7 @@ final class RecentlyWatchedEntity {
     var duration: Double
     var groupTitle: String
     var streamID: Int?
+    var hiddenFromContinueWatching: Bool = false
 
     init(from channel: Channel, position: Double = 0, duration: Double = 0) {
         self.channelID = channel.id

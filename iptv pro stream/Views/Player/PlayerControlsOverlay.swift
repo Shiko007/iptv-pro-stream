@@ -7,6 +7,7 @@ struct PlayerControlsOverlay: View {
     let onDismiss: () -> Void
     var onToggleFullScreen: (() -> Void)? = nil
     var isFullScreen: Bool = false
+    var onPreviousEpisode: (() -> Void)? = nil
     var onNextEpisode: (() -> Void)? = nil
     @State private var showControls = true
     @State private var hideTask: Task<Void, Never>?
@@ -35,12 +36,6 @@ struct PlayerControlsOverlay: View {
         streamType == .live
     }
 
-    private var showNextEpisode: Bool {
-        guard onNextEpisode != nil else { return false }
-        guard viewModel.duration > 0 else { return false }
-        return viewModel.duration - viewModel.currentTime <= Constants.Player.nextEpisodeThreshold
-    }
-
     var body: some View {
         ZStack {
             Color.clear
@@ -51,28 +46,6 @@ struct PlayerControlsOverlay: View {
                     }
                     if showControls { scheduleHide() }
                 }
-
-            // Next Episode button - always visible when near end, independent of controls
-            if showNextEpisode, let action = onNextEpisode {
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Button(action: action) {
-                            Label("Next Episode", systemImage: "forward.fill")
-                                .font(.headline)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 12)
-                                .background(.ultraThinMaterial, in: Capsule())
-                                .foregroundStyle(.white)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.trailing, 24)
-                    .padding(.bottom, bottomPadding + 70)
-                }
-                .transition(.move(edge: .trailing).combined(with: .opacity))
-            }
 
             if showControls {
                 LinearGradient(
@@ -214,6 +187,17 @@ struct PlayerControlsOverlay: View {
 
     private var bottomActions: some View {
         HStack {
+            if let onPreviousEpisode {
+                Button {
+                    onPreviousEpisode()
+                } label: {
+                    Label("Previous", systemImage: "backward.end.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.white)
+                }
+                .buttonStyle(.plain)
+            }
+
             Spacer()
 
             #if os(iOS) || os(macOS)
@@ -222,6 +206,17 @@ struct PlayerControlsOverlay: View {
                     .frame(width: 28, height: 28)
             }
             #endif
+
+            if let onNextEpisode {
+                Button {
+                    onNextEpisode()
+                } label: {
+                    Label("Next", systemImage: "forward.end.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.white)
+                }
+                .buttonStyle(.plain)
+            }
 
             #if os(macOS)
             if let onToggleFullScreen {
